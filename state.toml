@@ -1,0 +1,15 @@
+[repos.pelican-dev.panel.latest_tag]
+name = "v1.0.0-beta28"
+sha = "5c3b0919aa5e9717d68ea5e2abdb66c4961fbac1"
+
+[repos.pelican-dev.panel.previous_tag]
+name = "v1.0.0-beta27"
+sha = "1a4fa5e67a7709ade51e968d046c6748e34d5589"
+
+[repos.pelican-dev.wings.latest_tag]
+name = "v1.0.0-beta19"
+sha = "c7ee7a00d06d7dd5d5c7d09cd5180b1d997ad1ea"
+
+[repos.pelican-dev.wings.previous_tag]
+name = "v1.0.0-beta19"
+sha = "c7ee7a00d06d7dd5d5c7d09cd5180b1d997ad1ea"
