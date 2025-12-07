@@ -51,6 +51,9 @@ impl State {
 impl TagState {
     pub fn swap_with_new(&mut self, new_tag: &Tag) {
         self.previous_tag = self.latest_tag.clone();
-        self.latest_tag = Some(TagInfo { name: new_tag.name.clone(), sha: new_tag.commit.sha.clone() });
+        self.latest_tag = Some(TagInfo {
+            name: new_tag.name.clone(),
+            sha: new_tag.commit.sha.clone(),
+        });
     }
 }

@@ -1,13 +1,13 @@
-use std::time::Duration;
-use octocrab::models::repos::Object;
-use octocrab::Octocrab;
 use crate::state::{State, TagInfo};
+use octocrab::Octocrab;
+use octocrab::models::repos::Object;
 use octocrab::params::repos::Reference;
-use tracing::{info};
+use std::time::Duration;
+use tracing::info;
 use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 
-mod state;
 mod config;
+mod state;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -35,8 +35,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &entry.upstream_branch,
                 &entry.fork_owner,
                 &entry.fork_repo,
-                &entry.fork_branch
-            ).await;
+                &entry.fork_branch,
+            )
+            .await;
         }
 
         state.save();
@@ -68,7 +69,16 @@ async fn for_repo(
     let tag_state = state.repo_mut(upstream_owner, upstream_repo);
     tag_state.swap_with_new(upstream_tag);
 
-    if let (Some(TagInfo { name: latest_name, .. }), Some(TagInfo { name: previous_name, .. })) = (&tag_state.latest_tag, &tag_state.previous_tag) {
+    if let (
+        Some(TagInfo {
+            name: latest_name, ..
+        }),
+        Some(TagInfo {
+            name: previous_name,
+            ..
+        }),
+    ) = (&tag_state.latest_tag, &tag_state.previous_tag)
+    {
         if latest_name == previous_name {
             info!("No new tag for {upstream_owner}/{upstream_repo}");
             return;
@@ -77,14 +87,6 @@ async fn for_repo(
         info!(
             "New upstream tag detected for {upstream_owner}/{upstream_repo}: {previous_name} → {latest_name}"
         );
-
-        let fork_tags = octo
-            .repos(fork_owner, fork_repo)
-            .list_tags()
-            .per_page(1)
-            .send()
-            .await
-            .unwrap();
 
         let compare = octo
             .commits(upstream_owner, upstream_repo)
@@ -101,8 +103,7 @@ async fn for_repo(
             return;
         }
 
-        info!(
-            "Fork is up to date; pushing tag {latest_name} to {fork_owner}/{fork_repo}");
+        info!("Fork is up to date; pushing tag {latest_name} to {fork_owner}/{fork_repo}");
 
         if let Err(err) =
             push_tag_to_fork(octo, fork_owner, fork_repo, fork_branch, latest_name).await
@@ -121,7 +122,8 @@ async fn push_tag_to_fork(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let repo = octo.repos(fork_owner, fork_repo);
 
-    let object = repo.get_ref(&Reference::Branch(fork_branch.clone()))
+    let object = repo
+        .get_ref(&Reference::Branch(fork_branch.clone()))
         .await?
         .object;
 
@@ -131,8 +133,7 @@ async fn push_tag_to_fork(
         _ => panic!("Invalid object type"),
     };
 
-    repo
-        .create_ref(&Reference::Tag(tag_name.into()), sha)
+    repo.create_ref(&Reference::Tag(tag_name.into()), sha)
         .await?;
 
     info!("Pushed tag {tag_name} to {fork_owner}/{fork_repo}");
