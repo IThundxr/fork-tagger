@@ -1,5 +1,4 @@
 use std::{env, fs};
-use std::path::Path;
 use crate::state::{State, TagInfo};
 use octocrab::Octocrab;
 use octocrab::models::repos::Object;
