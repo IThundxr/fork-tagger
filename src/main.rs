@@ -1,11 +1,10 @@
-use std::env;
+use std::time::Duration;
 use octocrab::models::repos::Object;
 use octocrab::Octocrab;
 use crate::state::{State, TagInfo};
 use octocrab::params::repos::Reference;
 use tracing::{info};
 use tracing_subscriber::{EnvFilter, filter::LevelFilter};
-use crate::config::Config;
 
 mod state;
 mod config;
@@ -19,43 +18,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .from_env_lossy();
     tracing_subscriber::fmt().with_env_filter(env_filter).init();
 
-    let octo = Octocrab::builder()
-        .personal_token(env::var("GITHUB_TOKEN")?)
-        .build()?;
+    let config = config::Config::load()?;
 
-    let config = Config::load();
+    let octo = Octocrab::builder()
+        .personal_token(config.github_token)
+        .build()?;
     let mut state = State::load();
 
-    for entry in config.entries {
-        for_repo(
-            &octo,
-            &mut state,
-            entry.upstream_owner,
-            entry.upstream_repo,
-            entry.upstream_branch,
-            entry.fork_owner,
-            entry.fork_repo,
-            entry.fork_branch
-        ).await;
+    loop {
+        for entry in &config.entries {
+            for_repo(
+                &octo,
+                &mut state,
+                &entry.upstream_owner,
+                &entry.upstream_repo,
+                &entry.upstream_branch,
+                &entry.fork_owner,
+                &entry.fork_repo,
+                &entry.fork_branch
+            ).await;
+        }
+
+        state.save();
+
+        tokio::time::sleep(Duration::from_hours(1)).await;
     }
-
-    state.save();
-
-    Ok(())
 }
 
 async fn for_repo(
     octo: &Octocrab,
     state: &mut State,
-    upstream_owner: String,
-    upstream_repo: String,
-    upstream_branch: String,
-    fork_owner: String,
-    fork_repo: String,
-    fork_branch: String,
+    upstream_owner: &String,
+    upstream_repo: &String,
+    upstream_branch: &String,
+    fork_owner: &String,
+    fork_repo: &String,
+    fork_branch: &String,
 ) {
     let upstream_tags = octo
-        .repos(&upstream_owner, &upstream_repo)
+        .repos(upstream_owner, upstream_repo)
         .list_tags()
         .per_page(1)
         .send()
@@ -64,7 +65,7 @@ async fn for_repo(
 
     let upstream_tag = upstream_tags.items.first().unwrap();
 
-    let tag_state = state.repo_mut(&upstream_owner, &upstream_repo);
+    let tag_state = state.repo_mut(upstream_owner, upstream_repo);
     tag_state.swap_with_new(upstream_tag);
 
     if let (Some(TagInfo { name: latest_name, .. }), Some(TagInfo { name: previous_name, .. })) = (&tag_state.latest_tag, &tag_state.previous_tag) {
@@ -78,7 +79,7 @@ async fn for_repo(
         );
 
         let fork_tags = octo
-            .repos(&fork_owner, &fork_repo)
+            .repos(fork_owner, fork_repo)
             .list_tags()
             .per_page(1)
             .send()
@@ -113,14 +114,14 @@ async fn for_repo(
 
 async fn push_tag_to_fork(
     octo: &Octocrab,
-    fork_owner: String,
-    fork_repo: String,
-    fork_branch: String,
-    tag_name: &str,
+    fork_owner: &String,
+    fork_repo: &String,
+    fork_branch: &String,
+    tag_name: &String,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let repo = octo.repos(&fork_owner, &fork_repo);
+    let repo = octo.repos(fork_owner, fork_repo);
 
-    let object = repo.get_ref(&Reference::Branch(fork_branch))
+    let object = repo.get_ref(&Reference::Branch(fork_branch.clone()))
         .await?
         .object;
 

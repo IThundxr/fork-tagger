@@ -1,12 +1,9 @@
+use config::ConfigError;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
-
-const FOLDER: &str = "data";
-const CONFIG_FILE: &str = "data/config.toml";
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct Config {
+    pub github_token: String,
     pub entries: Vec<Entry>,
 }
 
@@ -27,21 +24,13 @@ fn default_branch() -> String {
 }
 
 impl Config {
-    pub fn load() -> Self {
-        match fs::read_to_string(CONFIG_FILE) {
-            Ok(contents) => toml::from_str(&contents).unwrap_or_default(),
-            Err(_) => {
-                let default = Config::default();
-                default.save();
-                default
-            },
-        }
-    }
+    pub fn load() -> Result<Self, ConfigError> {
+        let config = config::Config::builder()
+            .add_source(config::File::with_name("data/config"))
+            .add_source(config::Environment::with_prefix("APP"))
+            .build()?
+            .try_deserialize()?;
 
-    pub fn save(&self) {
-        fs::create_dir_all(FOLDER).unwrap();
-
-        let contents = toml::to_string(&self).unwrap();
-        fs::write(CONFIG_FILE, contents).unwrap();
+        Ok(config)
     }
 }
