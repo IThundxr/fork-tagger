@@ -1,39 +1,34 @@
-use std::{env, fs};
 use crate::state::{State, TagInfo};
 use octocrab::Octocrab;
 use octocrab::models::repos::Object;
 use octocrab::params::repos::Reference;
 use std::time::Duration;
+use std::{env, fs};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 
 mod config;
 mod state;
 
-fn main() {
-    if let Err(err) = async_main() {
-        panic!("Unhandled error: {:?}", err);
-    }
-}
-
 #[tokio::main]
-async fn async_main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::dotenv()?;
+async fn main() {
+    dotenvy::dotenv().unwrap();
 
     let env_filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::INFO.into())
         .from_env_lossy();
     tracing_subscriber::fmt().with_env_filter(env_filter).init();
 
-    let data_folder = env::var("DATA_FOLDER")?;
-    fs::create_dir_all(&data_folder)?;
+    let data_folder = env::var("DATA_FOLDER").unwrap();
+    fs::create_dir_all(&data_folder).unwrap();
 
-    let config = config::Config::load(&data_folder)?;
+    let config = config::Config::load(&data_folder).unwrap();
     let mut state = State::load(&data_folder);
 
     let octo = Octocrab::builder()
-        .personal_token(env::var("GITHUB_TOKEN")?)
-        .build()?;
+        .personal_token(env::var("GITHUB_TOKEN").unwrap())
+        .build()
+        .unwrap();
 
     loop {
         for entry in &config.entries {
