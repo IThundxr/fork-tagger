@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct Config {
-    pub github_token: String,
     pub entries: Vec<Entry>,
 }
 
@@ -24,9 +23,9 @@ fn default_branch() -> String {
 }
 
 impl Config {
-    pub fn load() -> Result<Self, ConfigError> {
+    pub fn load(location: String) -> Result<Self, ConfigError> {
         let config = config::Config::builder()
-            .add_source(config::File::with_name("data/config"))
+            .add_source(config::File::with_name(location.as_str()))
             .add_source(config::Environment::with_prefix("APP"))
             .build()?
             .try_deserialize()?;
