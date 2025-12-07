@@ -10,8 +10,14 @@ use tracing_subscriber::{EnvFilter, filter::LevelFilter};
 mod config;
 mod state;
 
+fn main() {
+    if let Err(err) = async_main() {
+        panic!("Unhandled error: {:?}", err);
+    }
+}
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn async_main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv()?;
 
     let env_filter = EnvFilter::builder()
