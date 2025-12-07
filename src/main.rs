@@ -1,4 +1,5 @@
-use std::env;
+use std::{env, fs};
+use std::path::Path;
 use crate::state::{State, TagInfo};
 use octocrab::Octocrab;
 use octocrab::models::repos::Object;
@@ -20,6 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().with_env_filter(env_filter).init();
 
     let data_folder = env::var("DATA_FOLDER")?;
+    fs::create_dir_all(&data_folder)?;
 
     let config = config::Config::load(&data_folder)?;
     let mut state = State::load(&data_folder);
