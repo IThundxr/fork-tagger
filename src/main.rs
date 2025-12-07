@@ -12,7 +12,7 @@ mod state;
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().unwrap();
+    dotenvy::dotenv().ok();
 
     let env_filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::INFO.into())
