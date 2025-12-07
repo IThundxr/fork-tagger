@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         state.save();
 
-        tokio::time::sleep(Duration::from_hours(1)).await;
+        tokio::time::sleep(Duration::from_millis(60 * 60 * 1000)).await;
     }
 }
 
