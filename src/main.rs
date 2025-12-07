@@ -19,12 +19,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .from_env_lossy();
     tracing_subscriber::fmt().with_env_filter(env_filter).init();
 
-    let config = config::Config::load(env::var("CONFIG_LOCATION")?)?;
+    let data_folder = env::var("DATA_FOLDER")?;
+
+    let config = config::Config::load(&data_folder)?;
+    let mut state = State::load(&data_folder);
 
     let octo = Octocrab::builder()
         .personal_token(env::var("GITHUB_TOKEN")?)
         .build()?;
-    let mut state = State::load();
 
     loop {
         for entry in &config.entries {
@@ -41,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await;
         }
 
-        state.save();
+        state.save(&data_folder);
 
         tokio::time::sleep(Duration::from_millis(60 * 60 * 1000)).await;
     }

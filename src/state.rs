@@ -3,9 +3,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 
-const FOLDER: &str = "data";
-const STATE_FILE: &str = "data/state.toml";
-
 #[derive(Deserialize, Serialize, Default)]
 pub struct State {
     // owner -> repo -> TagState
@@ -25,18 +22,16 @@ pub struct TagInfo {
 }
 
 impl State {
-    pub fn load() -> Self {
-        match fs::read_to_string(STATE_FILE) {
+    pub fn load(location: &String) -> Self {
+        match fs::read_to_string(format!("{location}/state.toml")) {
             Ok(contents) => toml::from_str(&contents).unwrap_or_default(),
             Err(_) => State::default(),
         }
     }
 
-    pub fn save(&self) {
-        fs::create_dir_all(FOLDER).unwrap();
-
+    pub fn save(&self, location: &String) {
         let contents = toml::to_string(&self).unwrap();
-        fs::write(STATE_FILE, contents).unwrap();
+        fs::write(format!("{location}/state.toml"), contents).unwrap();
     }
 
     pub fn repo_mut(&mut self, owner: impl Into<String>, repo: impl Into<String>) -> &mut TagState {

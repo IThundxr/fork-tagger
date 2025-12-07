@@ -23,9 +23,9 @@ fn default_branch() -> String {
 }
 
 impl Config {
-    pub fn load(location: String) -> Result<Self, ConfigError> {
+    pub fn load(location: &String) -> Result<Self, ConfigError> {
         let config = config::Config::builder()
-            .add_source(config::File::with_name(location.as_str()))
+            .add_source(config::File::with_name(&format!("{location}/config")))
             .add_source(config::Environment::with_prefix("APP"))
             .build()?
             .try_deserialize()?;
