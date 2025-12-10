@@ -11,14 +11,8 @@ pub struct State {
 
 #[derive(Deserialize, Serialize, Clone, Default)]
 pub struct TagState {
-    pub latest_tag: Option<TagInfo>,
-    pub previous_tag: Option<TagInfo>,
-}
-
-#[derive(Deserialize, Serialize, Clone, Default)]
-pub struct TagInfo {
-    pub name: String,
-    pub sha: String,
+    pub latest_tag: Option<String>,
+    pub previous_tag: Option<String>,
 }
 
 impl State {
@@ -46,9 +40,6 @@ impl State {
 impl TagState {
     pub fn swap_with_new(&mut self, new_tag: &Tag) {
         self.previous_tag = self.latest_tag.clone();
-        self.latest_tag = Some(TagInfo {
-            name: new_tag.name.clone(),
-            sha: new_tag.commit.sha.clone(),
-        });
+        self.latest_tag = Some(new_tag.name.clone());
     }
 }

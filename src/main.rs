@@ -1,4 +1,4 @@
-use crate::state::{State, TagInfo};
+use crate::state::State;
 use octocrab::Octocrab;
 use octocrab::models::repos::Object;
 use octocrab::params::repos::Reference;
@@ -72,19 +72,11 @@ async fn for_repo(
     let upstream_tag = upstream_tags.items.first().unwrap();
 
     let tag_state = state.repo_mut(upstream_owner, upstream_repo);
-    tag_state.swap_with_new(upstream_tag);
 
-    if let (
-        Some(TagInfo {
-            name: latest_name, ..
-        }),
-        Some(TagInfo {
-            name: previous_name,
-            ..
-        }),
-    ) = (&tag_state.latest_tag, &tag_state.previous_tag)
-    {
-        if latest_name == previous_name {
+    let previous_tag = tag_state.latest_tag.clone();
+
+    if let (Some(previous_name), Some(latest_name)) = (&previous_tag, Some(&upstream_tag.name)) {
+        if previous_name == latest_name {
             info!("No new tag for {upstream_owner}/{upstream_repo}");
             return;
         }
@@ -115,6 +107,8 @@ async fn for_repo(
         {
             info!("Failed to push tag: {err}");
         }
+
+        tag_state.swap_with_new(upstream_tag);
     }
 }
 
