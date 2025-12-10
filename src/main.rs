@@ -107,9 +107,9 @@ async fn for_repo(
         {
             info!("Failed to push tag: {err}");
         }
-
-        tag_state.swap_with_new(upstream_tag);
     }
+
+    tag_state.swap_with_new(upstream_tag);
 }
 
 async fn push_tag_to_fork(
